@@ -1,5 +1,8 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import math
+import seaborn as sns
 from sklearn.impute import KNNImputer
 
 
@@ -181,3 +184,151 @@ def knn_imputer(df, columns):
     df_filled = df.drop(columns, axis=1).merge(df_imputed, left_index=True, right_index=True)
     
     return df_filled, df_imputed
+
+
+def separate_categorical_numerical(df):
+    """
+    Separate the categorical and numerical columns of a pandas DataFrame.
+    
+    Parameters:
+    df (pandas.DataFrame): The input DataFrame.
+    
+    Returns:
+    tuple: A tuple containing two pandas DataFrames, one for the categorical columns and one for the numerical columns.
+    """
+    # Select the columns with data type 'object', which are assumed to be categorical
+    categorical_cols = df.select_dtypes(include=['object']).columns
+    # Select the columns with data types other than 'object', which are assumed to be numerical
+    numerical_cols = df.select_dtypes(exclude=['object']).columns
+    # Return two separate DataFrames, one for the categorical columns and one for the numerical columns
+
+    return categorical_cols, numerical_cols
+
+
+def create_contingency_tables(df):
+    """
+    Create contingency tables for selected categorical columns in a pandas DataFrame.
+    
+    Parameters:
+    df (pandas.DataFrame): The input DataFrame with categorical columns.
+    
+    Returns:
+    dict: A dictionary where the keys are the names of the categorical columns and the values are the contingency tables.
+    """
+
+    contingency_tables = {}
+    for col1 in df.columns:
+        for col2 in df.columns:
+            if col1 != col2:
+                ct = pd.crosstab(df[col1], df[col2])
+                contingency_tables[col1 + ' x ' + col2] = ct
+    
+    contingency_tables_df = pd.concat(contingency_tables, axis=1)
+
+    return contingency_tables_df
+
+
+def plot_categorical_comparison(df, column):
+    """
+    This function plots bar charts over subplots that compares the values of a column
+    with all the other categorical columns in a dataframe. The subplots are automatically 
+    adjusted to the number of columns and a maximum of two graphs per row is set.
+    
+    Parameters:
+    df (pandas.DataFrame): The input dataframe
+    column (str): The column to be compared with the other categorical columns
+    
+    Returns:
+    None
+    """
+    
+    # Get the categorical columns from the dataframe
+    categorical_columns = df.select_dtypes(include=['category', object]).columns
+    # Remove the column to be compared
+    categorical_columns = categorical_columns.drop(column)
+    
+    # Calculate the number of rows needed to plot the subplots
+    nrows = math.ceil(len(categorical_columns) / 2)
+    # Calculate the number of columns needed to plot the subplots
+    ncols = min(len(categorical_columns), 2)
+    
+    # Initialize the subplot
+    fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=(15, nrows*5))
+    
+    # Flatten the subplot axis array
+    ax = np.array(ax).flatten()
+    
+    # Iterate over the categorical columns
+    for i, cat_col in enumerate(categorical_columns):
+        # Plot the bar chart for the comparison
+        df.groupby([column, cat_col])[cat_col].count().unstack().plot(kind='bar', stacked=True, ax=ax[i])
+        # Set the title for the subplot
+        ax[i].set_title(f"{column} vs {cat_col}")
+        ax[i].legend(loc="upper left", fontsize="xx-small")
+        
+    # Show the plot
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_categorical_numerical_comparison(df, column):
+    """
+    Plot bar charts over subplots that compare one column to all other numerical columns in a DataFrame.
+    The point of comparison is the mean of each numerical column.
+    
+    Parameters
+    ----------
+    df: pd.DataFrame
+        The input DataFrame
+    column: str
+        The categorical column to be compared to the numerical columns
+    
+    Returns
+    -------
+    None
+    """
+    
+    numerical_columns = [col for col in df.columns if df[col].dtype in [np.number]]
+
+    # Calculate the number of rows needed to plot the subplots
+    nrows = math.ceil(len(numerical_columns) / 2)
+    # Calculate the number of columns needed to plot the subplots
+    ncols = min(len(numerical_columns), 2)
+
+    fig, ax = plt.subplots(nrows, ncols, figsize=(20, 10 * nrows))
+    ax = ax.flatten()
+    
+    for i, num_col in enumerate(numerical_columns):
+        axi = ax[i]
+        axi.set_title(num_col)
+        for category in sorted(df[column].unique()):
+            data = df[df[column] == category][num_col]
+            mean = data.mean()
+            axi.bar(category, mean, label=category)
+        axi.legend(loc="best")
+    
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_distributions(df, segment_col, figsize=(20, 10)):
+    """
+    This function plots the distributions of all numerical columns in a dataframe grouped by the segment column.
+    It creates subplots with two graphs per row.
+    
+    Parameters:
+        df (pandas dataframe): The dataframe to plot.
+        segment_col (str): The name of the column to group the distributions by.
+        figsize (tuple, optional): The size of the plot. Default is (20, 10).
+    
+    Returns:
+        None
+    """
+
+    numerical_cols = [col for col in df.columns if df[col].dtype in [np.float64, np.int64]]
+    
+    for i, num_col in enumerate(numerical_cols):
+        print(f"{num_col}")
+        df[num_col].hist(by=df[segment_col])
+        plt.tight_layout()
+        plt.show()
