@@ -4,14 +4,18 @@ import matplotlib.pyplot as plt
 import math
 import seaborn as sns
 from sklearn.impute import KNNImputer
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, LabelEncoder
+import category_encoders as ce
 
 
-def load_data(file_path, file_type='csv'):
+def load_data(file_path, index_col=0, file_type='csv'):
     """
     Loads data into a pandas DataFrame.
 
     Parameters:
     file_path (str): The file path to the data.
+    index_col (int, optional): The index to be used. Defaults to 0. 
     file_type (str): The type of file to be loaded. 
                      Default is 'csv'. 
                      Other options include 'excel', 'json', 'hdf', 'parquet', etc.
@@ -22,15 +26,15 @@ def load_data(file_path, file_type='csv'):
     """
     # Load the data into a pandas DataFrame
     if file_type == 'csv':
-        df = pd.read_csv(file_path)
+        df = pd.read_csv(file_path, index_col=index_col)
     elif file_type == 'excel':
-        df = pd.read_excel(file_path)
+        df = pd.read_excel(file_path, index_col=index_col)
     elif file_type == 'json':
-        df = pd.read_json(file_path)
+        df = pd.read_json(file_path, index_col=index_col)
     elif file_type == 'hdf':
-        df = pd.read_hdf(file_path)
+        df = pd.read_hdf(file_path, index_col=index_col)
     elif file_type == 'parquet':
-        df = pd.read_parquet(file_path)
+        df = pd.read_parquet(file_path, index_col=index_col)
     else:
         raise ValueError(f"Unsupported file type: {file_type}")
 
@@ -332,3 +336,122 @@ def plot_distributions(df, segment_col, figsize=(20, 10)):
         df[num_col].hist(by=df[segment_col])
         plt.tight_layout()
         plt.show()
+
+
+def normalize_dataframe(df):
+    """
+    Normalize all columns in a pandas dataframe using min-max normalization.
+    
+    Parameters:
+    df (pandas.DataFrame): The dataframe to be normalized
+    
+    Returns:
+    pandas.DataFrame: The normalized dataframe
+    """
+    # Calculate the minimum and maximum value of each column
+    min_vals = df.min()
+    max_vals = df.max()
+    
+    # Subtract the minimum value from each column and divide by the range
+    # This scales all columns to have a minimum value of 0 and a maximum value of 1
+    normalized_df = (df - min_vals) / (max_vals - min_vals)
+    
+    return normalized_df
+
+
+def normalize_dataframe(df, train: bool, scaler='standard'):
+    """
+    Normalize all columns in a pandas dataframe using either StandardScaler or MinMaxScaler.
+    
+    Parameters:
+    df (pandas.DataFrame): The data to be normalized.
+    train (bool): Whether the data is from the training set or not. If True, the data is from the training set.
+    scaler (str, optional): The type of scaler to use. Must be either 'standard' or 'minmax'. Default is 'standard'.
+    
+    Returns:
+    pandas.DataFrame, pandas.DataFrame: The normalized training data and test data as dataframes.
+    """
+
+    if scaler == 'standard':
+        # Use StandardScaler to normalize the data
+        scaler = StandardScaler()
+    elif scaler == 'minmax':
+        # Use MinMaxScaler to normalize the data
+        scaler = MinMaxScaler()
+    else:
+        raise ValueError(f"Invalid scaler type: {scaler}. Must be either 'standard' or 'minmax'.")
+    
+    if train: 
+        # Fit the scaler to the training data
+        scaler.fit(df)
+        
+        # Transform the training data
+        normalized_train_data = scaler.transform(df)
+        
+        # Return the normalized data as a dataframe
+        normalized_df_train = pd.DataFrame(normalized_train_data, columns=df.columns)
+
+        return normalized_df_train
+    
+    else:
+        # Transform the test data using the same parameters
+        normalized_test_data = scaler.transform(df)
+        
+        # Return the normalized test data as a dataframe
+        normalized_df_test = pd.DataFrame(normalized_test_data, columns=df.columns)
+
+        return normalized_df_test
+
+
+def encode_df(df, encoder_type, train: bool):
+    """
+    Perform encoding on a Pandas dataframe.
+    
+    Parameters:
+    df (pandas.DataFrame): The dataframe to be encoded.
+    encoder_type (str): The type of encoding to perform. Must be one of 'onehot', 'ordinal', or 'label'.
+    train (bool): Whether the data is from the training set or not. If True, the data is from the training set.
+    
+    Returns:
+    pandas.DataFrame: The encoded dataframe.
+    """
+
+    columns = df.columns
+    print(columns)
+    df_encoded = df.copy()
+    
+    encoders = {}
+    
+    for column in columns:
+            if encoder_type == 'onehot':
+                encoder = OneHotEncoder(handle_unknown='ignore')
+                if train:
+                    df_encoded = pd.concat([df_encoded, pd.DataFrame(encoder.fit_transform(df_encoded[[column]]).toarray(), columns=encoder.get_feature_names_out([column]))], axis=1)
+                else:
+                    df_encoded = pd.concat([df_encoded, pd.DataFrame(encoder.fit_transform(df_encoded[[column]]).toarray(), columns=encoder.get_feature_names_out([column]))], axis=1)
+                df_encoded = df_encoded.drop(column, axis=1)
+            elif encoder_type == 'ordinal':
+                encoder = OrdinalEncoder()
+                if train:
+                    encoders[column] = encoder
+                    df_encoded[column] = encoder.fit_transform(df_encoded[[column]])
+                else:
+                    df_encoded[column] = encoders[column].transform(df_encoded[[column]])
+            elif encoder_type == 'label':
+                encoder = LabelEncoder()
+                if train:
+                    encoders[column] = encoder
+                    df_encoded[column] = encoder.fit_transform(df_encoded[column])
+                else:
+                    df_encoded[column] = encoders[column].transform(df_encoded[column])
+            elif encoder_type == 'binary':
+                encoder = ce.BinaryEncoder()
+                if train:
+                    df_encoded = pd.concat([df_encoded, pd.DataFrame(encoder.fit_transform(df_encoded[[column]]), columns=encoder.get_feature_names_out())], axis=1)
+                else:
+                    df_encoded = pd.concat([df_encoded, pd.DataFrame(encoder.fit_transform(df_encoded[[column]]).toarray(), columns=encoder.get_feature_names_out([column]))], axis=1)
+                df_encoded = df_encoded.drop(column, axis=1)
+            else:
+                raise ValueError("Encoder type must be one of 'onehot', 'ordinal', 'label', or 'binary'.")
+    
+    return df_encoded
