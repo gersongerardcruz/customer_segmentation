@@ -344,33 +344,13 @@ def plot_distributions(df, segment_col, figsize=(20, 10)):
         plt.show()
 
 
-def normalize_dataframe(df):
-    """
-    Normalize all columns in a pandas dataframe using min-max normalization.
-    
-    Parameters:
-    df (pandas.DataFrame): The dataframe to be normalized
-    
-    Returns:
-    pandas.DataFrame: The normalized dataframe
-    """
-    # Calculate the minimum and maximum value of each column
-    min_vals = df.min()
-    max_vals = df.max()
-    
-    # Subtract the minimum value from each column and divide by the range
-    # This scales all columns to have a minimum value of 0 and a maximum value of 1
-    normalized_df = (df - min_vals) / (max_vals - min_vals)
-    
-    return normalized_df
-
-
-def normalize_dataframe(df, train: bool, scaler='standard'):
+def normalize_dataframe(df, train_df, train: bool, scaler='standard'):
     """
     Normalize all columns in a pandas dataframe using either StandardScaler or MinMaxScaler.
     
     Parameters:
-    df (pandas.DataFrame): The data to be normalized.
+    df (pandas dataframe): The data to be normalized.
+    train_df (pandas dataframe): The training data for fitting the scaler.
     train (bool): Whether the data is from the training set or not. If True, the data is from the training set.
     scaler (str, optional): The type of scaler to use. Must be either 'standard' or 'minmax'. Default is 'standard'.
     
@@ -387,10 +367,10 @@ def normalize_dataframe(df, train: bool, scaler='standard'):
     else:
         raise ValueError(f"Invalid scaler type: {scaler}. Must be either 'standard' or 'minmax'.")
     
+    # Fit the scaler to the training data
+    scaler.fit(train_df)
+
     if train: 
-        # Fit the scaler to the training data
-        scaler.fit(df)
-        
         # Transform the training data
         normalized_train_data = scaler.transform(df)
         
@@ -442,20 +422,22 @@ def encode_df(df, encoder_type, train: bool):
                     encoders[column] = encoder
                     df_encoded[column] = encoder.fit_transform(df_encoded[[column]])
                 else:
-                    df_encoded[column] = encoders[column].transform(df_encoded[[column]])
+                    encoders[column] = encoder
+                    df_encoded[column] = encoder.fit_transform(df_encoded[[column]])
             elif encoder_type == 'label':
                 encoder = LabelEncoder()
                 if train:
                     encoders[column] = encoder
                     df_encoded[column] = encoder.fit_transform(df_encoded[column])
                 else:
-                    df_encoded[column] = encoders[column].transform(df_encoded[column])
+                    encoders[column] = encoder
+                    df_encoded[column] = encoder.fit_transform(df_encoded[column])
             elif encoder_type == 'binary':
                 encoder = ce.BinaryEncoder()
                 if train:
                     df_encoded = pd.concat([df_encoded, pd.DataFrame(encoder.fit_transform(df_encoded[[column]]), columns=encoder.get_feature_names_out())], axis=1)
                 else:
-                    df_encoded = pd.concat([df_encoded, pd.DataFrame(encoder.fit_transform(df_encoded[[column]]).toarray(), columns=encoder.get_feature_names_out([column]))], axis=1)
+                    df_encoded = pd.concat([df_encoded, pd.DataFrame(encoder.fit_transform(df_encoded[[column]]), columns=encoder.get_feature_names_out())], axis=1)
                 df_encoded = df_encoded.drop(column, axis=1)
             else:
                 raise ValueError("Encoder type must be one of 'onehot', 'ordinal', 'label', or 'binary'.")
