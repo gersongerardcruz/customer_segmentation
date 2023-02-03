@@ -7,6 +7,12 @@ from sklearn.impute import KNNImputer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, LabelEncoder
 import category_encoders as ce
+from sklearn.metrics import accuracy_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
 
 
 def load_data(file_path, index_col=0, file_type='csv'):
@@ -455,3 +461,61 @@ def encode_df(df, encoder_type, train: bool):
                 raise ValueError("Encoder type must be one of 'onehot', 'ordinal', 'label', or 'binary'.")
     
     return df_encoded
+
+
+def train_classifier(X_train, X_test, y_train, y_test, classifier=None, compare=False):
+    """
+    Train a classifier on the input data and target.
+
+    Parameters:
+    X_train (pandas dataframe): Train data
+    X_test (pandas dataframe): Test data
+    y_train (pandas series): Train target
+    y_test (pandas series): Test target
+    classifier (str, optional): Classifier to use. Can be 'logistic', 'naive bayes', 'knn', 'decision tree', or 'random forest'. 
+                                 If not specified, all classifiers will be trained and compared.
+    compare (bool, optional): If True, all classifiers will be trained and compared. Default is False.
+
+    Returns:
+    classifier (sklearn classifier object): Trained classifier object.
+    accuracy (float): Accuracy of the trained classifier.
+    """
+
+    
+    # Dictionary of classifiers
+    classifiers = {
+        'logistic': LogisticRegression(),
+        'naive bayes': GaussianNB(),
+        'knn': KNeighborsClassifier(),
+        'decision tree': DecisionTreeClassifier(),
+        'random forest': RandomForestClassifier()
+    }
+    
+    # Train the specified classifier or all classifiers and compare their results
+    if classifier is not None:
+        # Train the specified classifier
+        model = classifiers[classifier]
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
+        accuracy = accuracy_score(y_test, y_pred)
+        
+        return model, accuracy
+    
+    elif compare:
+        # Train all classifiers and compare their results
+        results = []
+        for name, clf in classifiers.items():
+            clf.fit(X_train, y_train)
+            y_pred = clf.predict(X_test)
+            accuracy = accuracy_score(y_test, y_pred)
+            results.append((name, accuracy))
+        
+        # Sort results in descending order of accuracy
+        results.sort(key=lambda x: x[1], reverse=True)
+        
+        # Print the results
+        print("Classifier comparison:")
+        for name, accuracy in results:
+            print(f"{name}: {accuracy}")
+        
+        return results[0][0]
