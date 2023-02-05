@@ -13,6 +13,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 
 
 def load_data(file_path, index_col=0, file_type='csv'):
@@ -461,6 +462,7 @@ def train_classifier(X_train, X_test, y_train, y_test, classifier=None, compare=
     Returns:
     classifier (sklearn classifier object): Trained classifier object.
     accuracy (float): Accuracy of the trained classifier.
+    classifier name (str): Name of the best performing classifier. 
     """
 
     
@@ -499,5 +501,38 @@ def train_classifier(X_train, X_test, y_train, y_test, classifier=None, compare=
         print("Classifier comparison:")
         for name, accuracy in results:
             print(f"{name}: {accuracy}")
-        
-        return results[0][0]
+
+        model = classifiers[results[0][0]] 
+        return model, results[0][0]
+ 
+
+def hyperparameter_tuning(model, X_train, y_train, params, search_type='grid', n_iter=10, cv=5, random_state=0):
+    """
+    Performs hyperparameter tuning on the input model using GridSearchCV or RandomizedSearchCV.
+    
+    Parameters:
+    model (Estimator): An instance of a scikit-learn estimator that implements fit and predict methods.
+    X_train (ndarray): The training set.
+    y_train (ndarray): The target values of the training set.
+    params (dict): The parameters to use in the search.
+    search_type (str): The type of search to perform. Can be 'grid' or 'random'.
+    n_iter (int): The number of iterations to perform in RandomizedSearchCV. Only used if search_type is 'random'.
+    cv (int): The number of cross-validation folds to use in the search.
+    random_state (int): The random state to use for the search.
+    
+    Returns:
+    The best estimator found from the search.
+    """
+    if search_type == 'grid':
+        search = GridSearchCV(model, param_grid=params, cv=cv, n_jobs=-1)
+    elif search_type == 'random':
+        search = RandomizedSearchCV(model, param_distributions=params, n_iter=n_iter, cv=cv, n_jobs=-1, random_state=random_state)
+    else:
+        raise ValueError('Invalid search_type: {}'.format(search_type))
+    
+    search.fit(X_train, y_train)
+    
+    print('Best parameters:', search.best_params_)
+    print('Best score:', search.best_score_)
+    
+    return search.best_estimator_
