@@ -1,18 +1,15 @@
 from utils import *
 from sklearn.model_selection import train_test_split
+import json
 
-train_file_path = "../data/processed/cleaned_train.csv"
-test_file_path = "../data/processed/cleaned_test.csv"
+train_file_path = "../data/processed/modelling_train.csv"
 train = load_data(train_file_path)
-test = load_data(test_file_path)
 
 # Drop the ID column
 train = train.reset_index(drop=True)
-test = test.reset_index(drop=True)
 
 # Separate the target column
 train_target = train["Segmentation"]
-test_target = test["Segmentation"]
 
 # Separate categorical and numerical columns
 cat_cols, num_cols = separate_categorical_numerical(train)
@@ -20,29 +17,33 @@ cat_cols, num_cols = separate_categorical_numerical(train)
 # Normalize numerical values by minmax scaling because the distributions
 # are skewed
 train_num = normalize_dataframe(train[num_cols], train[num_cols], train=True, scaler='minmax')
-test_num = normalize_dataframe(test[num_cols], train[num_cols], train=False, scaler='minmax')
 
 # Encode categorical values based on type of encoding
 onehot_cols = ['Var_1', 'Profession']
-ordinal_cols = ['Spending_Score']
 label_cols = ['Gender', 'Graduated', 'Ever_Married']
+ordinal_cols = ['Spending_Score']
 
-train_onehot = encode_df(train[onehot_cols], 'onehot', train=True)
-train_ordinal = encode_df(train[ordinal_cols], 'ordinal', train=True)
-train_label = encode_df(train[label_cols], 'label', train=True)
+train_onehot, dict_onehot = encode_df(train[onehot_cols], 'onehot', train=True)
+train_label, dict_label = encode_df(train[label_cols], 'label', train=True)
+train_ordinal, dict_ordinal = encode_df(train[ordinal_cols], 'ordinal', train=True)
 
-test_onehot = encode_df(test[onehot_cols], 'onehot', train=False)
-test_ordinal = encode_df(test[ordinal_cols], 'ordinal', train=False)
-test_label = encode_df(test[label_cols], 'label', train=False)
+# Merge the three dictionaries of encoded mappings and store into json
+
+mappings = {}
+
+for d in (dict_onehot, dict_label, dict_ordinal):
+    mappings.update(d)
+
+with open("encoding_mappings.json", 'w') as f:
+    json.dump(mappings, f)
 
 # Concatenate the encoded dataframes with the normalized and scaled dataframe
 train_processed = pd.concat([train_num, train_ordinal, train_onehot, train_label], axis=1).reset_index(drop=True)
-test_processed = pd.concat([test_num, test_ordinal, test_onehot, test_label], axis=1).reset_index(drop=True)
 
-print(train_processed.columns)
-
+# Split into train and test sets
 X_train, X_test, y_train, y_test = train_test_split(train_processed, train_target, test_size = 0.2, random_state = 0)
 
+# Train the model and select the best performing classifier to tune
 model, model_name = train_classifier(X_train, X_test, y_train, y_test, compare=True)
 
 print("The best performing model is: {}".format(model_name))
@@ -97,4 +98,4 @@ elif model_name == 'decision tree':
 else:
     params = rf_params
 
-hyperparameter_tuning(model, X_train, y_train, params=params, search_type='grid')
+hyperparameter_tuning(model, X_train, y_train, params=params, search_type='random')

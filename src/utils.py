@@ -401,6 +401,8 @@ def encode_df(df, encoder_type, train: bool):
     
     Returns:
     pandas.DataFrame: The encoded dataframe.
+    dict: A dictionary containing a mapping of the original value and its encoded value for each column. Values encoded
+    as strings for better json interaction. 
     """
 
     columns = df.columns
@@ -408,7 +410,8 @@ def encode_df(df, encoder_type, train: bool):
     df_encoded = df.copy()
     
     encoders = {}
-    
+    mappings = {}
+
     for column in columns:
             if encoder_type == 'onehot':
                 encoder = OneHotEncoder(handle_unknown='ignore')
@@ -417,6 +420,8 @@ def encode_df(df, encoder_type, train: bool):
                 else:
                     df_encoded = pd.concat([df_encoded, pd.DataFrame(encoder.fit_transform(df_encoded[[column]]).toarray(), columns=encoder.get_feature_names_out([column]))], axis=1)
                 df_encoded = df_encoded.drop(column, axis=1)
+                mappings[column] = dict(zip(range(len(encoder.categories_[0])), encoder.categories_[0]))
+
             elif encoder_type == 'ordinal':
                 encoder = OrdinalEncoder()
                 if train:
@@ -425,6 +430,10 @@ def encode_df(df, encoder_type, train: bool):
                 else:
                     encoders[column] = encoder
                     df_encoded[column] = encoder.fit_transform(df_encoded[[column]])
+
+                # Encode the data and save the mapping to a dictionary
+                mappings[column] = {label: str(idx) for idx, label in enumerate(encoder.categories_[0])}
+
             elif encoder_type == 'label':
                 encoder = LabelEncoder()
                 if train:
@@ -433,6 +442,9 @@ def encode_df(df, encoder_type, train: bool):
                 else:
                     encoders[column] = encoder
                     df_encoded[column] = encoder.fit_transform(df_encoded[column])
+                mappings[column] = dict(zip(encoder.classes_, encoder.transform(encoder.classes_)))
+                mappings[column] = {k: str(v) for k, v in mappings[column].items()}
+
             elif encoder_type == 'binary':
                 encoder = ce.BinaryEncoder()
                 if train:
@@ -440,10 +452,12 @@ def encode_df(df, encoder_type, train: bool):
                 else:
                     df_encoded = pd.concat([df_encoded, pd.DataFrame(encoder.fit_transform(df_encoded[[column]]), columns=encoder.get_feature_names_out())], axis=1)
                 df_encoded = df_encoded.drop(column, axis=1)
+                mappings[column] = dict(zip(range(len(encoder.get_feature_names())), encoder.get_feature_names()))
+
             else:
                 raise ValueError("Encoder type must be one of 'onehot', 'ordinal', 'label', or 'binary'.")
     
-    return df_encoded
+    return df_encoded, mappings
 
 
 def train_classifier(X_train, X_test, y_train, y_test, classifier=None, compare=False):
