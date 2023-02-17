@@ -345,7 +345,7 @@ def plot_distributions(df, segment_col, figsize=(20, 10)):
         plt.show()
 
 
-def normalize_dataframe(df, train_df, train: bool, scaler='standard'):
+def normalize_dataframe(df, train_df, train: bool, save_scaler: bool, scaler='standard'):
     """
     Normalize all columns in a pandas dataframe using either StandardScaler or MinMaxScaler.
     
@@ -353,6 +353,7 @@ def normalize_dataframe(df, train_df, train: bool, scaler='standard'):
     df (pandas dataframe): The data to be normalized.
     train_df (pandas dataframe): The training data for fitting the scaler.
     train (bool): Whether the data is from the training set or not. If True, the data is from the training set.
+    save_scaler (bool): Whether to save the scaler parameters. 
     scaler (str, optional): The type of scaler to use. Must be either 'standard' or 'minmax'. Default is 'standard'.
     
     Returns:
@@ -370,6 +371,13 @@ def normalize_dataframe(df, train_df, train: bool, scaler='standard'):
     
     # Fit the scaler to the training data
     scaler.fit(train_df)
+
+    # Save the scaler parameters to file
+    if save_scaler == True:
+        if scaler == 'standard':
+            np.save('standard_scaler_params.npy', [scaler.mean_, scaler.var_])
+        else:
+            np.save('minmax_scaler_params.npy', [scaler.min_, scaler.scale_])
 
     if train: 
         # Transform the training data

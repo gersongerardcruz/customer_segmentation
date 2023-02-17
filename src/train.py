@@ -20,7 +20,7 @@ cat_cols, num_cols = separate_categorical_numerical(train)
 
 # Normalize numerical values by minmax scaling because the distributions
 # are skewed
-train_num = normalize_dataframe(train[num_cols], train[num_cols], train=True, scaler='minmax')
+train_num = normalize_dataframe(train[num_cols], train[num_cols], train=True, save_scaler=True, scaler='minmax')
 
 # Encode categorical values based on type of encoding
 onehot_cols = ['Profession']
