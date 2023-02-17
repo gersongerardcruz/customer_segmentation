@@ -1,12 +1,16 @@
 from utils import *
 from sklearn.model_selection import train_test_split
+from joblib import dump
 import json
 
 train_file_path = "../data/processed/modelling_train.csv"
 train = load_data(train_file_path)
 
-# Drop the ID column
+# Drop the ID column and Var_1 column 
+# Var_1 column dropped because of its difficulty
+# to determine what it actually is
 train = train.reset_index(drop=True)
+train = train.drop("Var_1", axis=1)
 
 # Separate the target column
 train_target = train["Segmentation"]
@@ -19,7 +23,7 @@ cat_cols, num_cols = separate_categorical_numerical(train)
 train_num = normalize_dataframe(train[num_cols], train[num_cols], train=True, scaler='minmax')
 
 # Encode categorical values based on type of encoding
-onehot_cols = ['Var_1', 'Profession']
+onehot_cols = ['Profession']
 label_cols = ['Gender', 'Graduated', 'Ever_Married']
 ordinal_cols = ['Spending_Score']
 
@@ -87,6 +91,15 @@ rf_params = {
     'bootstrap': [True, False]
 }
 
+gb_params = {
+    'learning_rate': [0.05, 0.1, 0.2], 
+    'n_estimators': [50, 100, 150, 200], 
+    'max_depth': [3, 4, 5], 
+    'min_samples_split': [2, 3, 4], 
+    'min_samples_leaf': [1, 2], 
+    'max_features': ['sqrt', 'log2', None]
+}
+
 if model_name == 'logistic':
     params = logreg_params
 elif model_name == 'knn':
@@ -95,7 +108,11 @@ elif model_name == 'naive bayes':
     params = nb_params
 elif model_name == 'decision tree':
     params = dt_params
-else:
+elif model_name == 'random forest':
     params = rf_params
+else:
+    params = gb_params
 
-hyperparameter_tuning(model, X_train, y_train, params=params, search_type='random')
+best_model = hyperparameter_tuning(model, X_train, y_train, params=params, search_type='grid')
+
+dump(best_model, "../models/model.joblib")

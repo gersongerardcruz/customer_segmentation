@@ -12,7 +12,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 
 
@@ -486,7 +486,8 @@ def train_classifier(X_train, X_test, y_train, y_test, classifier=None, compare=
         'naive bayes': GaussianNB(),
         'knn': KNeighborsClassifier(),
         'decision tree': DecisionTreeClassifier(),
-        'random forest': RandomForestClassifier()
+        'random forest': RandomForestClassifier(), 
+        'gradient boost': GradientBoostingClassifier()
     }
     
     # Train the specified classifier or all classifiers and compare their results
