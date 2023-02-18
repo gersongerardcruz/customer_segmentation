@@ -15,6 +15,7 @@ Shown below is the organization of the project:
     │   ├── processed      <- The final data sets for customer segmentation.
     │   └── raw            <- The original, immutable datasets.
     │
+    ├── images             <- The images used in the README documentation
     ├── notebooks          <- Jupyter notebooks containing the explorations performed in this project
     ├── requirements.txt   <- The requirements file for reproducing the project
     ├── src                <- Source code used in this project.
@@ -66,6 +67,7 @@ The next step is to clone the repository in the virtual environment by running:
 
 ```python
 HTTPS: git clone https://github.com/gersongerardcruz/customer_segmentation.git
+```
 
 ```python
 SSH: git clone git@github.com:gersongerardcruz/customer_segmentation.git
@@ -77,8 +79,30 @@ Then, move into the repository and install the requirements with:
 cd customer_segmentation
 pip install -r requirements.txt
 ```
-Finally, deploy the app locally via streamlit by running:
+Finally, deploy the app locally via streamlit by moving into the `src` directory and running:
 
 ```python
-streamlit run src/app.py
+cd src
+streamlit run app.py
 ```
+
+The streamlit app should look like this: 
+
+![snapshot](images/streamlit_app.jpg)
+
+If you want to train a new model after having changed updated the training data, use the following command while still in the src folder:
+
+```python
+python3 train.py
+```
+
+This command will train and tune a new method based on the best scoring classifier and update the `model.joblib` file in the `models` directory.  
+
+## Future Recommendations
+
+* Collect better and more distinguishing data on customer behavior and preferences to improve segmentation accuracy
+* Explore additional features that could provide valuable insights into customer behavior and preferences, such as purchase history, social media activity, and customer feedback.
+
+## Conclusion
+
+Customer segmentation is an important tool for businesses to effectively target and engage their most valuable customers. This project demonstrates the use of machine learning algorithms to segment customers based on their demographic and behavioral characteristics. With more distinguishing and improved data, this model can be further refined to provide even more accurate customer segmentation.
