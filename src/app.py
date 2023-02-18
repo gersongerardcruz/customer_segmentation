@@ -11,7 +11,7 @@ st.title("Customer Segmentation Classification")
 st.markdown("This is a Streamlit deployment of a customer segmentation model trained on [Kaggle's Customer Segmentation Classification Dataset](https://www.kaggle.com/datasets/kaushiksuresh147/customer-segmentation?select=Train.csv).")
 st.markdown("The goal of the project is to classify the customer based on four segments: A, B, C, and D. These segments are described as follows: ") 
 
-with open("notebooks/descriptions.json") as f:
+with open("../notebooks/descriptions.json") as f:
     segment_descriptions = json.load(f)
 
 segment_descriptions = pd.DataFrame(segment_descriptions.values(), index=segment_descriptions.keys(), columns=["description"])
@@ -43,7 +43,7 @@ encodings = {
 
 # Load scaler for numerical values
 scaler = MinMaxScaler()
-scaler.min_, scaler.scale_ = np.load('src/minmax_scaler_params.npy')
+scaler.min_, scaler.scale_ = np.load('minmax_scaler_params.npy')
 
 # Set up Streamlit structure
 with col1:
@@ -65,7 +65,7 @@ inputs = {'Family Size': family_size, 'Age': age, 'Work Experience': work_experi
           'Profession': work_profession, 'Gender':gender, 'Graduated': graduated, 'Married':married 
           }
 
-model = joblib.load("models/model.joblib")
+model = joblib.load("../models/model.joblib")
 
 if st.button("Submit"):
     # Preprocess the inputs
