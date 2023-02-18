@@ -1,11 +1,26 @@
 import streamlit as st
 import numpy as np
 import joblib
+import json
 from utils import *
 
 st.set_page_config(page_title="Automobile Customer Segmentation", layout="wide")
 
+
+# Add project descriptions
 st.title("Customer Segmentation Classification")
+st.markdown("This is a Streamlit deployment of a customer segmentation model trained on [Kaggle's Customer Segmentation Classification Dataset](https://www.kaggle.com/datasets/kaushiksuresh147/customer-segmentation?select=Train.csv).")
+st.markdown("The goal of the project is to classify the customer based on four segments: A, B, C, and D. These segments are described as follows: ") 
+
+with open("../notebooks/descriptions.json") as f:
+    segment_descriptions = json.load(f)
+
+segment_descriptions = pd.DataFrame(segment_descriptions.values(), index=segment_descriptions.keys(), columns=["description"])
+st.table(segment_descriptions)
+
+st.markdown("These descriptions are **by no means definitive**. They are simply the result of Exploratory Data Analysis performed on this [notebook](https://github.com/gersongerardcruz/customer_segmentation/blob/main/notebooks/eda_on_segments.ipynb). Feel free to check it out!")
+
+st.subheader("User Input for Segment Prediction")
 
 col1, col2, col3 = st.columns(3)
 
@@ -96,6 +111,6 @@ if st.button("Submit"):
 
     # Use the model to make a prediction
     prediction = model.predict(predict_df)
-    st.write("This customer is predicted to belong to Segment", prediction[0])
+    st.write("This customer is predicted to belong to Segment", prediction[0], ": ", segment_descriptions.loc[prediction[0]])
 
-        
+st.markdown("For more information about the project e.g. how it was trained, the project structure, and the like, check the [Github repo](https://github.com/gersongerardcruz/customer_segmentation). The documentation and code was made to be as explanatory as possible so anyone could replicate it.")
