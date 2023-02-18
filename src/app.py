@@ -65,7 +65,7 @@ inputs = {'Family Size': family_size, 'Age': age, 'Work Experience': work_experi
           'Profession': work_profession, 'Gender':gender, 'Graduated': graduated, 'Married':married 
           }
 
-model = joblib.load("../models/model.joblib")
+model = joblib.load("models/model.joblib")
 
 if st.button("Submit"):
     # Preprocess the inputs
