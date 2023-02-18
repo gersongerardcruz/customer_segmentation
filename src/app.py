@@ -43,7 +43,7 @@ encodings = {
 
 # Load scaler for numerical values
 scaler = MinMaxScaler()
-scaler.min_, scaler.scale_ = np.load('minmax_scaler_params.npy')
+scaler.min_, scaler.scale_ = np.load('src/minmax_scaler_params.npy')
 
 # Set up Streamlit structure
 with col1:
