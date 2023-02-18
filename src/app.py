@@ -6,13 +6,12 @@ from utils import *
 
 st.set_page_config(page_title="Automobile Customer Segmentation", layout="wide")
 
-
 # Add project descriptions
 st.title("Customer Segmentation Classification")
 st.markdown("This is a Streamlit deployment of a customer segmentation model trained on [Kaggle's Customer Segmentation Classification Dataset](https://www.kaggle.com/datasets/kaushiksuresh147/customer-segmentation?select=Train.csv).")
 st.markdown("The goal of the project is to classify the customer based on four segments: A, B, C, and D. These segments are described as follows: ") 
 
-with open("../notebooks/descriptions.json") as f:
+with open("notebooks/descriptions.json") as f:
     segment_descriptions = json.load(f)
 
 segment_descriptions = pd.DataFrame(segment_descriptions.values(), index=segment_descriptions.keys(), columns=["description"])
