@@ -54,7 +54,7 @@ The dataset contains the following features:
 4. Training and tuning: The model was trained with six classifiers: logistic regression, knn, decision trees, naive bayes, random forests, and gradient boosting with the best performing model in terms of accuracy being selected and tuned via GridSearchCV. Model saved using joblib.
 5. Deployment: Inputs were taken from the user and the same encoding and scaling schemes were applied and a dataset with shape (1, 16) was generated for prediction. The model, loaded in using joblib, then predicts and gives a resulting customer segmentation. 
 
-## Using the Repo
+## Project Instructions
 
 To run the application, first create a virtual environment. I used [miniconda](https://docs.conda.io/en/latest/miniconda.html) as my virtual environment manager and create an environment with the following command: 
 
