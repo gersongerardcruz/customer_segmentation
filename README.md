@@ -1,4 +1,4 @@
-# Streamlit Model Deployment of an Machine Learning-based Customer Segmentation Model
+# Streamlit Model Deployment of a Machine Learning-based Customer Segmentation Model
 
 ## Overview
 
